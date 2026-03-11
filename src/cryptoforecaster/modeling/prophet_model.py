@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 
-from cryptoforecast.config import settings
-from cryptoforecast.modeling.base import BaseModel
+from cryptoforecaster.config import settings
+from cryptoforecaster.modeling.base import BaseModel
 
 
 class ProphetModel(BaseModel):
@@ -64,13 +64,17 @@ class ProphetModel(BaseModel):
 
         df = self.prepare_series(df)
         self.train_start = df["timestamp"].min().to_pydatetime()
-        self.train_end   = df["timestamp"].max().to_pydatetime()
+        self.train_end = df["timestamp"].max().to_pydatetime()
 
         # Prophet expects columns: ds (datetime), y (value)
-        prophet_df = pd.DataFrame({
-            "ds": df["timestamp"].dt.tz_localize(None),   # Prophet doesn't handle tz-aware
-            "y":  np.log1p(df["price"]) if self._log_transform else df["price"],
-        })
+        prophet_df = pd.DataFrame(
+            {
+                "ds": df["timestamp"].dt.tz_localize(
+                    None
+                ),  # Prophet doesn't handle tz-aware
+                "y": np.log1p(df["price"]) if self._log_transform else df["price"],
+            }
+        )
 
         self._model = Prophet(
             changepoint_prior_scale=self.changepoint_prior_scale,
@@ -95,8 +99,10 @@ class ProphetModel(BaseModel):
             np.expm1(y_pred) if self._log_transform else y_pred,
         )
         self._is_fitted = True
-        logger.success(f"[Prophet] {self.coin_id} — MAE={self.metrics['mae']:.2f}, "
-                       f"MAPE={self.metrics['mape']:.2%}")
+        logger.success(
+            f"[Prophet] {self.coin_id} — MAE={self.metrics['mae']:.2f}, "
+            f"MAPE={self.metrics['mape']:.2%}"
+        )
         return self
 
     def predict(
@@ -106,38 +112,41 @@ class ProphetModel(BaseModel):
     ) -> pd.DataFrame:
         self.check_fitted()
         future = self._model.make_future_dataframe(periods=horizon, freq="D")
-        raw    = self._model.predict(future)
+        raw = self._model.predict(future)
 
         if not include_history:
             # Only return the future (beyond training end)
             raw = raw[raw["ds"] > pd.Timestamp(self.train_end)]
 
-        y_hat  = raw["yhat"].values
-        y_low  = raw["yhat_lower"].values
+        y_hat = raw["yhat"].values
+        y_low = raw["yhat_lower"].values
         y_high = raw["yhat_upper"].values
 
         if self._log_transform:
-            y_hat  = np.expm1(y_hat)
-            y_low  = np.expm1(y_low)
+            y_hat = np.expm1(y_hat)
+            y_low = np.expm1(y_low)
             y_high = np.expm1(y_high)
 
         # Clip negatives (log transform edge case)
-        y_hat  = np.clip(y_hat, 0, None)
-        y_low  = np.clip(y_low, 0, None)
+        y_hat = np.clip(y_hat, 0, None)
+        y_low = np.clip(y_low, 0, None)
         y_high = np.clip(y_high, 0, None)
 
         train_end_ts = pd.Timestamp(self.train_end)
-        result = pd.DataFrame({
-            "coin_id":       self.coin_id,
-            "model_name":    self.name,
-            "model_version": self.version,
-            "symbol":        settings.coin_symbols.get(self.coin_id, self.coin_id.upper()),
-            "timestamp":     pd.to_datetime(raw["ds"]).dt.tz_localize("UTC"),
-            "forecast":      y_hat,
-            "lower_bound":   y_low,
-            "upper_bound":   y_high,
-            "is_future":     pd.to_datetime(raw["ds"]) > train_end_ts,
-        })
+        result = pd.DataFrame(
+            {
+                "coin_id": self.coin_id,
+                "model_name": self.name,
+                "model_version": self.version,
+                "symbol": settings.coin_symbols.get(self.coin_id, self.coin_id.upper()),
+                "timestamp": pd.to_datetime(raw["ds"]).dt.tz_localize("UTC"),
+                "forecast": y_hat,
+                "lower_bound": y_low,
+                "upper_bound": y_high,
+                "is_future": pd.to_datetime(raw["ds"]).dt.tz_localize("UTC")
+                > train_end_ts,
+            }
+        )
         return result
 
     def save(self, path: Optional[str] = None) -> str:
@@ -160,7 +169,7 @@ class ProphetModel(BaseModel):
 
     @staticmethod
     def _calc_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
-        mae  = float(np.mean(np.abs(y_true - y_pred)))
+        mae = float(np.mean(np.abs(y_true - y_pred)))
         rmse = float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
         mask = y_true != 0
         mape = float(np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])))

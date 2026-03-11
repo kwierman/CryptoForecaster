@@ -15,10 +15,10 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 
-from cryptoforecast.config import settings
-from cryptoforecast.modeling.base import BaseModel
-from cryptoforecast.modeling.arima_model import ARIMAModel
-from cryptoforecast.modeling.prophet_model import ProphetModel
+from cryptoforecaster.config import settings
+from cryptoforecaster.modeling.base import BaseModel
+from cryptoforecaster.modeling.arima_model import ARIMAModel
+from cryptoforecaster.modeling.prophet_model import ProphetModel
 
 
 class EnsembleModel(BaseModel):

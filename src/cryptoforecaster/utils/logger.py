@@ -2,7 +2,7 @@
 
 import sys
 from loguru import logger
-from cryptoforecast.config import settings
+from cryptoforecaster.config import settings
 
 
 def setup_logger(level: str = settings.log_level):

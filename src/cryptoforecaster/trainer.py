@@ -12,12 +12,12 @@ from typing import Dict, List, Optional
 import pandas as pd
 from loguru import logger
 
-from cryptoforecast.config import settings
-from cryptoforecast.modeling.base import BaseModel
-from cryptoforecast.modeling.prophet_model import ProphetModel
-from cryptoforecast.modeling.arima_model import ARIMAModel
-from cryptoforecast.modeling.ensemble import EnsembleModel
-from cryptoforecast.storage.database import CryptoDatabase
+from cryptoforecaster.config import settings
+from cryptoforecaster.modeling.base import BaseModel
+from cryptoforecaster.modeling.prophet_model import ProphetModel
+from cryptoforecaster.modeling.arima_model import ARIMAModel
+from cryptoforecaster.modeling.ensemble import EnsembleModel
+from cryptoforecaster.storage.database import CryptoDatabase
 
 
 _MODEL_REGISTRY: Dict[str, type] = {

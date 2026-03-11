@@ -2,11 +2,11 @@
 CryptoForecast CLI
 ==================
 Usage:
-  cryptoforecast ingest  [--coins BTC,ETH,...] [--days 365]
-  cryptoforecast train   [--coins BTC,ETH,...] [--model prophet|arima|ensemble]
-  cryptoforecast predict [--coins BTC,ETH,...] [--horizon 30]
-  cryptoforecast pipeline  (runs ingest → train → predict in one shot)
-  cryptoforecast summary
+  cryptoforecaster ingest  [--coins BTC,ETH,...] [--days 365]
+  cryptoforecaster train   [--coins BTC,ETH,...] [--model prophet|arima|ensemble]
+  cryptoforecaster predict [--coins BTC,ETH,...] [--horizon 30]
+  cryptoforecaster pipeline  (runs ingest → train → predict in one shot)
+  cryptoforecaster summary
 """
 
 from typing import List, Optional
@@ -37,9 +37,9 @@ def ingest(
     days:  int           = typer.Option(365,   "--days",  help="Historical days to fetch"),
 ):
     """Pull data from CoinGecko and store in DuckDB."""
-    from cryptoforecast.ingestion.fetcher import CryptoFetcher
-    from cryptoforecast.storage.database  import CryptoDatabase
-    from cryptoforecast.utils.logger      import setup_logger
+    from cryptoforecaster.ingestion.fetcher import CryptoFetcher
+    from cryptoforecaster.storage.database  import CryptoDatabase
+    from cryptoforecaster.utils.logger      import setup_logger
     setup_logger()
 
     coin_list = _parse_coins(coins)
@@ -63,9 +63,9 @@ def train(
     model: str           = typer.Option("prophet", "--model", help="prophet | arima | ensemble"),
 ):
     """Train a forecast model for each coin."""
-    from cryptoforecast.modeling.trainer import ForecastTrainer
-    from cryptoforecast.storage.database import CryptoDatabase
-    from cryptoforecast.utils.logger     import setup_logger
+    from cryptoforecaster.modeling.trainer import ForecastTrainer
+    from cryptoforecaster.storage.database import CryptoDatabase
+    from cryptoforecaster.utils.logger     import setup_logger
     setup_logger()
 
     coin_list = _parse_coins(coins)
@@ -97,9 +97,9 @@ def predict(
     horizon: int           = typer.Option(30,        "--horizon", help="Forecast days ahead"),
 ):
     """Run inference and store forecasts in DuckDB."""
-    from cryptoforecast.forecasting.predictor import ForecastPredictor
-    from cryptoforecast.storage.database      import CryptoDatabase
-    from cryptoforecast.utils.logger          import setup_logger
+    from cryptoforecaster.forecasting.predictor import ForecastPredictor
+    from cryptoforecaster.storage.database      import CryptoDatabase
+    from cryptoforecaster.utils.logger          import setup_logger
     setup_logger()
 
     coin_list = _parse_coins(coins)
@@ -130,7 +130,7 @@ def pipeline(
     horizon: int           = typer.Option(30,         "--horizon", help="Forecast days"),
 ):
     """Run the full pipeline: ingest → train → predict."""
-    from cryptoforecast.utils.logger import setup_logger
+    from cryptoforecaster.utils.logger import setup_logger
     setup_logger()
 
     rprint("[bold magenta]🚀 Running full pipeline…[/bold magenta]")
@@ -154,7 +154,7 @@ def pipeline(
 @app.command()
 def summary():
     """Show a summary of data stored in DuckDB."""
-    from cryptoforecast.storage.database import CryptoDatabase
+    from cryptoforecaster.storage.database import CryptoDatabase
     db = CryptoDatabase()
     _print_summary(db)
 

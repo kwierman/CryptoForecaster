@@ -21,7 +21,7 @@ import duckdb
 import pandas as pd
 from loguru import logger
 
-from cryptoforecast.config import settings
+from cryptoforecaster.config import settings
 
 
 _SCHEMA_SQL = """
@@ -35,11 +35,12 @@ CREATE TABLE IF NOT EXISTS market_prices (
     price        DOUBLE,
     market_cap   DOUBLE,
     volume       DOUBLE,
-    ingested_at  TIMESTAMPTZ DEFAULT now(),
-    UNIQUE (coin_id, timestamp)
+    ingested_at  TIMESTAMPTZ DEFAULT now()
 );
 
+CREATE SEQUENCE IF NOT EXISTS seq_market_prices START 1;
 CREATE INDEX IF NOT EXISTS idx_mp_coin_ts ON market_prices (coin_id, timestamp);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mp_coin_ts_unique ON market_prices (coin_id, timestamp);
 
 -- ── OHLCV candles ─────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS ohlcv (
@@ -51,11 +52,12 @@ CREATE TABLE IF NOT EXISTS ohlcv (
     high        DOUBLE,
     low         DOUBLE,
     close       DOUBLE,
-    ingested_at TIMESTAMPTZ DEFAULT now(),
-    UNIQUE (coin_id, timestamp)
+    ingested_at TIMESTAMPTZ DEFAULT now()
 );
 
+CREATE SEQUENCE IF NOT EXISTS seq_ohlcv START 1;
 CREATE INDEX IF NOT EXISTS idx_ohlcv_coin_ts ON ohlcv (coin_id, timestamp);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ohlcv_coin_ts_unique ON ohlcv (coin_id, timestamp);
 
 -- ── Market snapshots ──────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS market_snapshot (
@@ -80,6 +82,8 @@ CREATE TABLE IF NOT EXISTS market_snapshot (
     fetched_at           TIMESTAMPTZ
 );
 
+CREATE SEQUENCE IF NOT EXISTS seq_market_snapshot START 1;
+
 -- ── Forecasts ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS forecasts (
     id              INTEGER PRIMARY KEY,
@@ -92,11 +96,12 @@ CREATE TABLE IF NOT EXISTS forecasts (
     lower_bound     DOUBLE,
     upper_bound     DOUBLE,
     is_future       BOOLEAN DEFAULT TRUE,
-    created_at      TIMESTAMPTZ DEFAULT now(),
-    UNIQUE (coin_id, model_name, model_version, timestamp)
+    created_at      TIMESTAMPTZ DEFAULT now()
 );
 
+CREATE SEQUENCE IF NOT EXISTS seq_forecasts START 1;
 CREATE INDEX IF NOT EXISTS idx_fc_coin_model ON forecasts (coin_id, model_name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_fc_coin_model_ts_unique ON forecasts (coin_id, model_name, model_version, timestamp);
 
 -- ── Model registry ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS model_registry (
@@ -109,9 +114,11 @@ CREATE TABLE IF NOT EXISTS model_registry (
     train_end       TIMESTAMPTZ,
     metrics         JSON,
     hyperparams     JSON,
-    trained_at      TIMESTAMPTZ DEFAULT now(),
-    UNIQUE (coin_id, model_name, model_version)
+    trained_at      TIMESTAMPTZ DEFAULT now()
 );
+
+CREATE SEQUENCE IF NOT EXISTS seq_model_registry START 1;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_model_registry_unique ON model_registry (coin_id, model_name, model_version);
 """
 
 _SEQUENCES_SQL = """
@@ -183,10 +190,13 @@ class CryptoDatabase:
         if df.empty:
             return 0
         conn = self.conn
-        # Register df as a view, then INSERT OR REPLACE
         conn.register("_mp_staging", df)
         conn.execute("""
-            INSERT OR REPLACE INTO market_prices
+            DELETE FROM market_prices WHERE (coin_id, timestamp) IN 
+            (SELECT coin_id, timestamp FROM _mp_staging)
+        """)
+        conn.execute("""
+            INSERT INTO market_prices
                 (id, coin_id, symbol, currency, timestamp, price, market_cap, volume)
             SELECT
                 nextval('seq_market_prices'),
@@ -203,7 +213,11 @@ class CryptoDatabase:
         conn = self.conn
         conn.register("_ohlcv_staging", df)
         conn.execute("""
-            INSERT OR REPLACE INTO ohlcv
+            DELETE FROM ohlcv WHERE (coin_id, timestamp) IN 
+            (SELECT coin_id, timestamp FROM _ohlcv_staging)
+        """)
+        conn.execute("""
+            INSERT INTO ohlcv
                 (id, coin_id, symbol, timestamp, open, high, low, close)
             SELECT
                 nextval('seq_ohlcv'),
@@ -233,7 +247,11 @@ class CryptoDatabase:
         conn = self.conn
         conn.register("_fc_staging", df)
         conn.execute("""
-            INSERT OR REPLACE INTO forecasts
+            DELETE FROM forecasts WHERE (coin_id, model_name, model_version, timestamp) IN 
+            (SELECT coin_id, model_name, model_version, timestamp FROM _fc_staging)
+        """)
+        conn.execute("""
+            INSERT INTO forecasts
                 (id, coin_id, symbol, model_name, model_version,
                  timestamp, forecast, lower_bound, upper_bound, is_future)
             SELECT
@@ -258,16 +276,30 @@ class CryptoDatabase:
         hyperparams: dict,
     ):
         conn = self.conn
-        conn.execute("""
-            INSERT OR REPLACE INTO model_registry
+        conn.execute(
+            """
+            DELETE FROM model_registry WHERE coin_id = ? AND model_name = ? AND model_version = ?
+        """,
+            [coin_id, model_name, model_version],
+        )
+        conn.execute(
+            """
+            INSERT INTO model_registry
                 (id, coin_id, model_name, model_version, model_path,
                  train_start, train_end, metrics, hyperparams)
             VALUES (nextval('seq_model_registry'), ?, ?, ?, ?, ?, ?, ?, ?)
-        """, [
-            coin_id, model_name, model_version, model_path,
-            train_start, train_end,
-            json.dumps(metrics), json.dumps(hyperparams),
-        ])
+        """,
+            [
+                coin_id,
+                model_name,
+                model_version,
+                model_path,
+                train_start,
+                train_end,
+                json.dumps(metrics),
+                json.dumps(hyperparams),
+            ],
+        )
         logger.info(f"Registered model {model_name} v{model_version} for {coin_id}")
 
     # ── Queries ───────────────────────────────────────────────────────────
@@ -317,11 +349,14 @@ class CryptoDatabase:
         ).df()
 
     def get_latest_model(self, coin_id: str, model_name: str) -> Optional[dict]:
-        row = self.conn.execute("""
+        row = self.conn.execute(
+            """
             SELECT * FROM model_registry
             WHERE coin_id = ? AND model_name = ?
             ORDER BY trained_at DESC LIMIT 1
-        """, [coin_id, model_name]).fetchone()
+        """,
+            [coin_id, model_name],
+        ).fetchone()
         if not row:
             return None
         cols = [d[0] for d in self.conn.description]

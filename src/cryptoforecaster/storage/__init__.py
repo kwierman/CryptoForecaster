@@ -1,3 +1,3 @@
-from cryptoforecast.storage.database import CryptoDatabase
+from cryptoforecaster.storage.database import CryptoDatabase
 
 __all__ = ["CryptoDatabase"]

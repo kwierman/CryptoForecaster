@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from cryptoforecast.modeling.base import BaseModel
+from cryptoforecaster.modeling.base import BaseModel
 
 
 def make_price_series(n=200, seed=42):
@@ -33,7 +33,7 @@ class TestARIMAModel:
     """Integration tests (slower, require statsmodels)."""
 
     def test_fit_and_predict(self):
-        from cryptoforecast.modeling.arima_model import ARIMAModel
+        from cryptoforecaster.modeling.arima_model import ARIMAModel
         df = make_price_series(120)
         model = ARIMAModel(coin_id="bitcoin", order=(2, 1, 0), seasonal_order=(0, 0, 0, 0))
         model.fit(df)
@@ -47,13 +47,13 @@ class TestARIMAModel:
         assert len(future_rows) == 7
 
     def test_unfitted_raises(self):
-        from cryptoforecast.modeling.arima_model import ARIMAModel
+        from cryptoforecaster.modeling.arima_model import ARIMAModel
         model = ARIMAModel(coin_id="bitcoin")
         with pytest.raises(RuntimeError):
             model.predict(horizon=5)
 
     def test_save_and_load(self, tmp_path):
-        from cryptoforecast.modeling.arima_model import ARIMAModel
+        from cryptoforecaster.modeling.arima_model import ARIMAModel
         df = make_price_series(120)
         model = ARIMAModel(coin_id="bitcoin", order=(1, 1, 0), seasonal_order=(0, 0, 0, 0))
         model.fit(df)
@@ -70,7 +70,7 @@ class TestProphetModel:
 
     def test_fit_and_predict(self):
         pytest.importorskip("prophet")
-        from cryptoforecast.modeling.prophet_model import ProphetModel
+        from cryptoforecaster.modeling.prophet_model import ProphetModel
         df = make_price_series(200)
         model = ProphetModel(coin_id="bitcoin")
         model.fit(df)

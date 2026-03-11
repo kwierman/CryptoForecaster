@@ -21,7 +21,7 @@ import duckdb
 import pandas as pd
 from loguru import logger
 
-from cryptoforecast.config import settings
+from cryptoforecaster.config import settings
 
 
 _SCHEMA_SQL = """

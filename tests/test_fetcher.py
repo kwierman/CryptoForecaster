@@ -4,7 +4,7 @@ import pytest
 import pandas as pd
 from unittest.mock import MagicMock, patch
 
-from cryptoforecast.ingestion.fetcher import CryptoFetcher
+from cryptoforecaster.ingestion.fetcher import CryptoFetcher
 
 
 MOCK_CHART = {

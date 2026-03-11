@@ -17,8 +17,8 @@ import joblib
 import pandas as pd
 from loguru import logger
 
-from cryptoforecast.config import settings
-from cryptoforecast.storage.database import CryptoDatabase
+from cryptoforecaster.config import settings
+from cryptoforecaster.storage.database import CryptoDatabase
 
 
 class ForecastPredictor:

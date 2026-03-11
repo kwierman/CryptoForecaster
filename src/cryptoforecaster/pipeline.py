@@ -5,7 +5,7 @@ Useful for running from Python scripts, notebooks, or schedulers.
 
 Example
 -------
->>> from cryptoforecast.pipeline import run_pipeline
+>>> from cryptoforecaster.pipeline import run_pipeline
 >>> results = run_pipeline(coins=["bitcoin", "ethereum"], model="ensemble")
 """
 
@@ -16,11 +16,11 @@ from typing import Dict, List, Optional
 import pandas as pd
 from loguru import logger
 
-from cryptoforecast.config import settings
-from cryptoforecast.ingestion.fetcher import CryptoFetcher
-from cryptoforecast.storage.database import CryptoDatabase
-from cryptoforecast.modeling.trainer import ForecastTrainer
-from cryptoforecast.forecasting.predictor import ForecastPredictor
+from cryptoforecaster.config import settings
+from cryptoforecaster.ingestion.fetcher import CryptoFetcher
+from cryptoforecaster.storage.database import CryptoDatabase
+from cryptoforecaster.modeling.trainer import ForecastTrainer
+from cryptoforecaster.forecasting.predictor import ForecastPredictor
 
 
 def ingest(

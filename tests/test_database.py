@@ -4,7 +4,7 @@ import pytest
 import pandas as pd
 from datetime import datetime, timezone
 
-from cryptoforecast.storage.database import CryptoDatabase
+from cryptoforecaster.storage.database import CryptoDatabase
 
 
 @pytest.fixture

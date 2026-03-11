@@ -1,3 +1,3 @@
-from cryptoforecast.ingestion.fetcher import CryptoFetcher
+from cryptoforecaster.ingestion.fetcher import CryptoFetcher
 
 __all__ = ["CryptoFetcher"]

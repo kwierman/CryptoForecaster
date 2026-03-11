@@ -15,7 +15,7 @@ import pandas as pd
 import requests
 from loguru import logger
 
-from cryptoforecast.config import settings
+from cryptoforecaster.config import settings
 
 
 class CryptoFetcher:
