@@ -24,7 +24,7 @@ jobs:
 
       - name: Install dependencies
         # 'uv sync' installs dependencies from pyproject.toml and uv.lock
-        run: uv sync
+        run: uv sync && uv sync --group dev
 
       - name: Run tests
         # Use 'uv run' to execute commands within the managed environment
@@ -36,5 +36,5 @@ jobs:
 
       - name: run Mypy
         # Use 'uv run' to execute commands within the managed environment
-        run: uv run mypy src/
+        run: uv run mypy --install-types src/
         
