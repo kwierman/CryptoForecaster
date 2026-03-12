@@ -416,7 +416,6 @@ requires-dist = [
     { name = "statsmodels", specifier = ">=0.14.0" },
     { name = "torch", specifier = ">=2.0.0" },
     { name = "typer", specifier = ">=0.24.1" },
-    { name = "typer", extras = ["all"], specifier = ">=0.24.1" },
 ]
 provides-extras = ["dev"]
 
