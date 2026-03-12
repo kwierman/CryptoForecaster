@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"] # Test across multiple Python versions
+        python-version: ["3.11", "3.12", "3.14"] # Test across multiple Python versions
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,5 +36,5 @@ jobs:
 
       - name: run Mypy
         # Use 'uv run' to execute commands within the managed environment
-        run: uv run mypy --install-types src/
+        run: uv run mypy src/
         
