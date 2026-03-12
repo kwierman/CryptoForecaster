@@ -13,7 +13,7 @@ Schema
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
@@ -258,16 +258,24 @@ class CryptoDatabase:
         hyperparams: dict,
     ):
         conn = self.conn
-        conn.execute("""
+        conn.execute(
+            """
             INSERT OR REPLACE INTO model_registry
                 (id, coin_id, model_name, model_version, model_path,
                  train_start, train_end, metrics, hyperparams)
             VALUES (nextval('seq_model_registry'), ?, ?, ?, ?, ?, ?, ?, ?)
-        """, [
-            coin_id, model_name, model_version, model_path,
-            train_start, train_end,
-            json.dumps(metrics), json.dumps(hyperparams),
-        ])
+        """,
+            [
+                coin_id,
+                model_name,
+                model_version,
+                model_path,
+                train_start,
+                train_end,
+                json.dumps(metrics),
+                json.dumps(hyperparams),
+            ],
+        )
         logger.info(f"Registered model {model_name} v{model_version} for {coin_id}")
 
     # ── Queries ───────────────────────────────────────────────────────────
@@ -317,11 +325,14 @@ class CryptoDatabase:
         ).df()
 
     def get_latest_model(self, coin_id: str, model_name: str) -> Optional[dict]:
-        row = self.conn.execute("""
+        row = self.conn.execute(
+            """
             SELECT * FROM model_registry
             WHERE coin_id = ? AND model_name = ?
             ORDER BY trained_at DESC LIMIT 1
-        """, [coin_id, model_name]).fetchone()
+        """,
+            [coin_id, model_name],
+        ).fetchone()
         if not row:
             return None
         cols = [d[0] for d in self.conn.description]

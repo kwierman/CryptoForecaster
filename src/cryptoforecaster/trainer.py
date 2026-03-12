@@ -21,8 +21,8 @@ from cryptoforecaster.storage.database import CryptoDatabase
 
 
 _MODEL_REGISTRY: Dict[str, type] = {
-    "prophet":  ProphetModel,
-    "arima":    ARIMAModel,
+    "prophet": ProphetModel,
+    "arima": ARIMAModel,
     "ensemble": EnsembleModel,
 }
 
@@ -48,8 +48,8 @@ class ForecastTrainer:
         model_name: str = settings.default_model,
         train_test_split: float = settings.train_test_split,
     ):
-        self.db              = db or CryptoDatabase()
-        self.model_name      = model_name.lower()
+        self.db = db or CryptoDatabase()
+        self.model_name = model_name.lower()
         self.train_test_split = train_test_split
 
         if self.model_name not in _MODEL_REGISTRY:
@@ -65,7 +65,9 @@ class ForecastTrainer:
         """Train a model for a single coin. Returns the fitted model."""
         df = self.db.get_price_series(coin_id)
         if df.empty:
-            raise ValueError(f"No price data found for '{coin_id}'. Run ingestion first.")
+            raise ValueError(
+                f"No price data found for '{coin_id}'. Run ingestion first."
+            )
 
         df_train, df_test = self._split(df)
         logger.info(
@@ -150,12 +152,19 @@ class ForecastTrainer:
         fc_df = model.predict(horizon=n, include_history=False)
         # Align forecast with test dates
         test_prices = df_test["price"].values
-        pred_prices = fc_df["forecast"].values[: n]
+        pred_prices = fc_df["forecast"].values[:n]
 
-        mae  = float(np.mean(np.abs(test_prices - pred_prices)))
-        rmse = float(np.sqrt(np.mean((test_prices - pred_prices) ** 2)))
-        mask = test_prices != 0
-        mape = float(np.mean(np.abs(
-            (test_prices[mask] - pred_prices[mask]) / test_prices[mask]
-        )))
+        mae = float(np.mean(np.abs(np.asarray(test_prices) - np.asarray(pred_prices))))
+        rmse = float(
+            np.sqrt(np.mean((np.asarray(test_prices) - np.asarray(pred_prices)) ** 2))
+        )
+        mask = np.asarray(test_prices) != 0
+        mape = float(
+            np.mean(
+                np.abs(
+                    (np.asarray(test_prices)[mask] - np.asarray(pred_prices)[mask])
+                    / np.asarray(test_prices)[mask]
+                )
+            )
+        )
         return {"mae": mae, "rmse": rmse, "mape": mape}

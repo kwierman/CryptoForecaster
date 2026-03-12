@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import abc
 from datetime import datetime
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 import pandas as pd
 
@@ -26,6 +26,7 @@ class BaseModel(abc.ABC):
         self.train_end: Optional[datetime] = None
         self.metrics: Dict[str, float] = {}
         self.version: str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        self.model_path: Optional[str] = None
 
     # ── Abstract interface ────────────────────────────────────────────────
 

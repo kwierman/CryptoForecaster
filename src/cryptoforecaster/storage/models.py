@@ -17,7 +17,7 @@ class MarketPrice(SQLModel, table=True):
     volume: Optional[float] = None
     ingested_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore")  # type: ignore[assignment]
 
 
 class OHLCV(SQLModel, table=True):
@@ -33,7 +33,7 @@ class OHLCV(SQLModel, table=True):
     close: Optional[float] = None
     ingested_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore")  # type: ignore[assignment]
 
 
 class MarketSnapshot(SQLModel, table=True):
@@ -59,7 +59,7 @@ class MarketSnapshot(SQLModel, table=True):
     ath_date: Optional[str] = None
     fetched_at: Optional[datetime] = None
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore")  # type: ignore[assignment]
 
 
 class Forecast(SQLModel, table=True):
@@ -77,7 +77,7 @@ class Forecast(SQLModel, table=True):
     is_future: bool = Field(default=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore")  # type: ignore[assignment]
 
 
 class ModelRegistry(SQLModel, table=True):
@@ -94,7 +94,7 @@ class ModelRegistry(SQLModel, table=True):
     hyperparams: Optional[str] = None
     trained_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore")  # type: ignore[assignment]
 
 
 class Trade(SQLModel, table=True):
@@ -111,7 +111,7 @@ class Trade(SQLModel, table=True):
     strategy_name: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore")  # type: ignore[assignment]
 
 
 class PortfolioSnapshot(SQLModel, table=True):
@@ -125,4 +125,4 @@ class PortfolioSnapshot(SQLModel, table=True):
     strategy_name: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore")  # type: ignore[assignment]

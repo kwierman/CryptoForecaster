@@ -5,7 +5,7 @@ import numpy as np
 from loguru import logger
 
 from cryptoforecaster.schemas import BacktestResult, TradeSignal, StrategyParams
-from cryptoforecaster.strategy import BaseStrategy, get_strategy
+from cryptoforecaster.strategy import get_strategy
 
 
 class Portfolio:
@@ -195,9 +195,9 @@ class BacktestEngine:
         if len(values) < 2:
             return 0.0
 
-        values = np.array(values)
-        running_max = np.maximum.accumulate(values)
-        drawdown = (values - running_max) / running_max
+        values_arr = np.array(values)
+        running_max = np.maximum.accumulate(values_arr)
+        drawdown = (values_arr - running_max) / running_max
         return abs(np.min(drawdown))
 
 

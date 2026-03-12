@@ -38,9 +38,9 @@ class ForecastPredictor:
         model_name: str = settings.default_model,
         horizon: int = settings.forecast_horizon,
     ):
-        self.db         = db or CryptoDatabase()
+        self.db = db or CryptoDatabase()
         self.model_name = model_name
-        self.horizon    = horizon
+        self.horizon = horizon
 
     # ── Public API ────────────────────────────────────────────────────────
 
@@ -77,15 +77,22 @@ class ForecastPredictor:
         # Join with actuals
         actuals = self.db.get_price_series(coin_id)[["timestamp", "price"]]
         actuals["timestamp"] = pd.to_datetime(actuals["timestamp"], utc=True)
-        fc_df["timestamp"]   = pd.to_datetime(fc_df["timestamp"], utc=True)
+        fc_df["timestamp"] = pd.to_datetime(fc_df["timestamp"], utc=True)
 
         result = fc_df.merge(actuals, on="timestamp", how="left")
         result = result.sort_values("timestamp").reset_index(drop=True)
 
         if save_to_db:
             cols = [
-                "coin_id", "symbol", "model_name", "model_version",
-                "timestamp", "forecast", "lower_bound", "upper_bound", "is_future",
+                "coin_id",
+                "symbol",
+                "model_name",
+                "model_version",
+                "timestamp",
+                "forecast",
+                "lower_bound",
+                "upper_bound",
+                "is_future",
             ]
             self.db.upsert_forecasts(result[cols])
 
@@ -133,10 +140,10 @@ class ForecastPredictor:
         Pull saved forecasts and join with actuals for evaluation.
         Returns a DataFrame useful for plotting / reporting.
         """
-        fc  = self.db.get_forecasts(coin_id, self.model_name)
+        fc = self.db.get_forecasts(coin_id, self.model_name)
         act = self.db.get_price_series(coin_id)[["timestamp", "price"]]
 
-        fc["timestamp"]  = pd.to_datetime(fc["timestamp"], utc=True)
+        fc["timestamp"] = pd.to_datetime(fc["timestamp"], utc=True)
         act["timestamp"] = pd.to_datetime(act["timestamp"], utc=True)
 
         merged = fc.merge(act, on="timestamp", how="left")

@@ -155,10 +155,17 @@ class ForecastTrainer:
         test_prices = df_test["price"].values
         pred_prices = fc_df["forecast"].values[:n]
 
-        mae = float(np.mean(np.abs(test_prices - pred_prices)))
-        rmse = float(np.sqrt(np.mean((test_prices - pred_prices) ** 2)))
-        mask = test_prices != 0
+        mae = float(np.mean(np.abs(np.asarray(test_prices) - np.asarray(pred_prices))))
+        rmse = float(
+            np.sqrt(np.mean((np.asarray(test_prices) - np.asarray(pred_prices)) ** 2))
+        )
+        mask = np.asarray(test_prices) != 0
         mape = float(
-            np.mean(np.abs((test_prices[mask] - pred_prices[mask]) / test_prices[mask]))
+            np.mean(
+                np.abs(
+                    (np.asarray(test_prices)[mask] - np.asarray(pred_prices)[mask])
+                    / np.asarray(test_prices)[mask]
+                )
+            )
         )
         return {"mae": mae, "rmse": rmse, "mape": mape}

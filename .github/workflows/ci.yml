@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"] # Test across multiple Python versions
+    steps:
+      - name: Checkout repository
+        uses: [actions/checkout](https://github.com)@v4
+
+      - name: Install uv and set Python version
+        uses: [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv)@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true # Enable caching for speed improvements
+
+      - name: Install dependencies
+        # 'uv sync' installs dependencies from pyproject.toml and uv.lock
+        run: uv sync --locked
+
+      - name: Run tests
+        # Use 'uv run' to execute commands within the managed environment
+        run: uv run pytest
+
+      - name: Run Ruff
+        # Use 'uv run' to execute commands within the managed environment
+        run: uv run ruff format src/
+
+      - name: run Mypy
+        # Use 'uv run' to execute commands within the managed environment
+        run: uv run mypy src/
+        

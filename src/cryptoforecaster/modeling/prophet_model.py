@@ -85,15 +85,15 @@ class ProphetModel(BaseModel):
             uncertainty_samples=500,
         )
         # Add monthly seasonality — useful for crypto cycles
-        self._model.add_seasonality(name="monthly", period=30.5, fourier_order=5)
+        self._model.add_seasonality(name="monthly", period=30.5, fourier_order=5)  # type: ignore[attr-defined]
 
         logger.info(f"[Prophet] Fitting {self.coin_id} on {len(prophet_df)} rows…")
-        self._model.fit(prophet_df)
+        self._model.fit(prophet_df)  # type: ignore[attr-defined]
 
         # In-sample metrics
-        in_sample = self._model.predict(prophet_df[["ds"]])
-        y_true = prophet_df["y"].values
-        y_pred = in_sample["yhat"].values
+        in_sample = self._model.predict(prophet_df[["ds"]])  # type: ignore[attr-defined]
+        y_true = np.asarray(prophet_df["y"].values)
+        y_pred = np.asarray(in_sample["yhat"].values)
         self.metrics = self._calc_metrics(
             np.expm1(y_true) if self._log_transform else y_true,
             np.expm1(y_pred) if self._log_transform else y_pred,
@@ -111,11 +111,11 @@ class ProphetModel(BaseModel):
         include_history: bool = True,
     ) -> pd.DataFrame:
         self.check_fitted()
-        future = self._model.make_future_dataframe(periods=horizon, freq="D")
-        raw = self._model.predict(future)
+        future = self._model.make_future_dataframe(periods=horizon, freq="D")  # type: ignore[attr-defined]
+        raw = self._model.predict(future)  # type: ignore[attr-defined]
 
         if not include_history:
-            train_end_ts = pd.Timestamp(self.train_end).tz_localize(None)
+            train_end_ts = pd.Timestamp(self.train_end)  # type: ignore[arg-type]
             raw = raw[raw["ds"] > train_end_ts]
 
         y_hat = raw["yhat"].values
@@ -132,7 +132,7 @@ class ProphetModel(BaseModel):
         y_low = np.clip(y_low, 0, None)
         y_high = np.clip(y_high, 0, None)
 
-        train_end_ts = pd.Timestamp(self.train_end)
+        train_end_ts = pd.Timestamp(self.train_end)  # type: ignore[arg-type]
         result = pd.DataFrame(
             {
                 "coin_id": self.coin_id,

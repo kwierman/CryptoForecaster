@@ -16,19 +16,20 @@ def db(tmp_path):
 
 def make_price_df(coin_id="bitcoin", n=10):
     dates = pd.date_range("2024-01-01", periods=n, freq="D", tz="UTC")
-    return pd.DataFrame({
-        "coin_id":    coin_id,
-        "symbol":     "BTC",
-        "currency":   "USD",
-        "timestamp":  dates,
-        "price":      [40000 + i * 100 for i in range(n)],
-        "market_cap": [8e11 + i * 1e9 for i in range(n)],
-        "volume":     [2e10] * n,
-    })
+    return pd.DataFrame(
+        {
+            "coin_id": coin_id,
+            "symbol": "BTC",
+            "currency": "USD",
+            "timestamp": dates,
+            "price": [40000 + i * 100 for i in range(n)],
+            "market_cap": [8e11 + i * 1e9 for i in range(n)],
+            "volume": [2e10] * n,
+        }
+    )
 
 
 class TestCryptoDatabase:
-
     def test_upsert_market_prices(self, db):
         df = make_price_df(n=5)
         rows = db.upsert_market_prices(df)
@@ -63,17 +64,19 @@ class TestCryptoDatabase:
 
     def test_upsert_forecasts(self, db):
         dates = pd.date_range("2024-01-01", periods=5, freq="D", tz="UTC")
-        fc_df = pd.DataFrame({
-            "coin_id":       "bitcoin",
-            "symbol":        "BTC",
-            "model_name":    "prophet",
-            "model_version": "v1",
-            "timestamp":     dates,
-            "forecast":      [40000.0, 41000, 42000, 43000, 44000],
-            "lower_bound":   [39000.0] * 5,
-            "upper_bound":   [45000.0] * 5,
-            "is_future":     [False, False, True, True, True],
-        })
+        fc_df = pd.DataFrame(
+            {
+                "coin_id": "bitcoin",
+                "symbol": "BTC",
+                "model_name": "prophet",
+                "model_version": "v1",
+                "timestamp": dates,
+                "forecast": [40000.0, 41000, 42000, 43000, 44000],
+                "lower_bound": [39000.0] * 5,
+                "upper_bound": [45000.0] * 5,
+                "is_future": [False, False, True, True, True],
+            }
+        )
         rows = db.upsert_forecasts(fc_df)
         assert rows == 5
 

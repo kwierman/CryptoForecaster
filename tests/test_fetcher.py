@@ -8,9 +8,9 @@ from cryptoforecaster.ingestion.fetcher import CryptoFetcher
 
 
 MOCK_CHART = {
-    "prices":       [[1700000000000, 35000.0], [1700086400000, 36000.0]],
-    "market_caps":  [[1700000000000, 6.8e11],  [1700086400000, 7.0e11]],
-    "total_volumes":[[1700000000000, 2.0e10],  [1700086400000, 2.1e10]],
+    "prices": [[1700000000000, 35000.0], [1700086400000, 36000.0]],
+    "market_caps": [[1700000000000, 6.8e11], [1700086400000, 7.0e11]],
+    "total_volumes": [[1700000000000, 2.0e10], [1700086400000, 2.1e10]],
 }
 
 MOCK_OHLCV = [
@@ -20,15 +20,23 @@ MOCK_OHLCV = [
 
 MOCK_MARKETS = [
     {
-        "id": "bitcoin", "symbol": "btc", "name": "Bitcoin",
-        "current_price": 37000, "market_cap": 7.2e11, "market_cap_rank": 1,
-        "total_volume": 2.2e10, "high_24h": 37500, "low_24h": 36000,
+        "id": "bitcoin",
+        "symbol": "btc",
+        "name": "Bitcoin",
+        "current_price": 37000,
+        "market_cap": 7.2e11,
+        "market_cap_rank": 1,
+        "total_volume": 2.2e10,
+        "high_24h": 37500,
+        "low_24h": 36000,
         "price_change_percentage_1h_in_currency": 0.1,
         "price_change_percentage_24h_in_currency": 1.2,
         "price_change_percentage_7d_in_currency": -2.3,
         "price_change_percentage_30d_in_currency": 5.0,
-        "circulating_supply": 19e6, "total_supply": 21e6,
-        "ath": 69000, "ath_date": "2021-11-10T14:24:11.849Z",
+        "circulating_supply": 19e6,
+        "total_supply": 21e6,
+        "ath": 69000,
+        "ath_date": "2021-11-10T14:24:11.849Z",
     }
 ]
 
@@ -49,13 +57,14 @@ def mock_get(endpoint, params=None, retries=3):
 
 
 class TestCryptoFetcher:
-
     def test_fetch_market_chart(self, fetcher):
         with patch.object(fetcher, "_get", side_effect=mock_get):
             df = fetcher.fetch_market_chart("bitcoin", days=1)
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 2
-        assert set(["coin_id", "timestamp", "price", "market_cap", "volume"]).issubset(df.columns)
+        assert set(["coin_id", "timestamp", "price", "market_cap", "volume"]).issubset(
+            df.columns
+        )
         assert df["coin_id"].iloc[0] == "bitcoin"
         assert df["price"].iloc[0] == pytest.approx(35000.0)
 

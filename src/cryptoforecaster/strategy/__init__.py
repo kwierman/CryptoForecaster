@@ -1,7 +1,5 @@
-from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import pandas as pd
-import numpy as np
 from loguru import logger
 
 from cryptoforecaster.schemas import StrategyParams, TradeSignal
@@ -42,7 +40,7 @@ class MomentumStrategy(BaseStrategy):
     """Momentum-based trading strategy."""
 
     def generate_signals(self, data: pd.DataFrame, coin_id: str) -> List[TradeSignal]:
-        signals = []
+        signals: List[TradeSignal] = []
 
         if len(data) < 2:
             return signals
@@ -82,7 +80,7 @@ class MeanReversionStrategy(BaseStrategy):
     """Mean reversion trading strategy using RSI."""
 
     def generate_signals(self, data: pd.DataFrame, coin_id: str) -> List[TradeSignal]:
-        signals = []
+        signals: List[TradeSignal] = []
 
         if len(data) < 30:
             return signals
@@ -122,7 +120,7 @@ class TrendFollowingStrategy(BaseStrategy):
     """Trend following strategy using dual moving averages."""
 
     def generate_signals(self, data: pd.DataFrame, coin_id: str) -> List[TradeSignal]:
-        signals = []
+        signals: List[TradeSignal] = []
 
         if len(data) < self.params.long_window:
             return signals
@@ -180,7 +178,7 @@ class AITradingStrategy(BaseStrategy):
         self.predictions = predictions
 
     def generate_signals(self, data: pd.DataFrame, coin_id: str) -> List[TradeSignal]:
-        signals = []
+        signals: List[TradeSignal] = []
 
         if self.predictions is None or self.predictions.empty:
             logger.warning(f"No predictions available for {coin_id}")
@@ -233,7 +231,7 @@ def get_strategy(
     predictions: Optional[pd.DataFrame] = None,
 ) -> BaseStrategy:
     """Factory function to get trading strategy."""
-    strategies = {
+    strategies: Dict[str, Any] = {
         "momentum": MomentumStrategy,
         "mean_reversion": MeanReversionStrategy,
         "trend_following": TrendFollowingStrategy,

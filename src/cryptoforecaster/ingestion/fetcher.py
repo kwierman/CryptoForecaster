@@ -41,14 +41,18 @@ class CryptoFetcher:
         self.request_delay = request_delay
         self.timeout = timeout
         self.session = requests.Session()
-        self.session.headers.update({
-            "Accept": "application/json",
-            "User-Agent": "CryptoForecast/0.1.0 (open-source research tool)",
-        })
+        self.session.headers.update(
+            {
+                "Accept": "application/json",
+                "User-Agent": "CryptoForecast/0.1.0 (open-source research tool)",
+            }
+        )
 
     # ── Private helpers ───────────────────────────────────────────────────────
 
-    def _get(self, endpoint: str, params: Optional[dict] = None, retries: int = 3) -> dict:
+    def _get(
+        self, endpoint: str, params: Optional[dict] = None, retries: int = 3
+    ) -> dict:
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         for attempt in range(1, retries + 1):
             try:
@@ -112,16 +116,26 @@ class CryptoFetcher:
             return pd.DataFrame()
 
         df_price = pd.DataFrame(prices, columns=["timestamp_ms", "price"])
-        df_mcap  = pd.DataFrame(market_caps, columns=["timestamp_ms", "market_cap"])
-        df_vol   = pd.DataFrame(volumes, columns=["timestamp_ms", "volume"])
+        df_mcap = pd.DataFrame(market_caps, columns=["timestamp_ms", "market_cap"])
+        df_vol = pd.DataFrame(volumes, columns=["timestamp_ms", "volume"])
 
         df = df_price.merge(df_mcap, on="timestamp_ms").merge(df_vol, on="timestamp_ms")
         df["timestamp"] = df["timestamp_ms"].apply(self._ts_to_dt)
-        df["coin_id"]   = coin_id
-        df["symbol"]    = settings.coin_symbols.get(coin_id, coin_id.upper())
-        df["currency"]  = self.vs_currency.upper()
+        df["coin_id"] = coin_id
+        df["symbol"] = settings.coin_symbols.get(coin_id, coin_id.upper())
+        df["currency"] = self.vs_currency.upper()
 
-        df = df[["coin_id", "symbol", "currency", "timestamp", "price", "market_cap", "volume"]]
+        df = df[
+            [
+                "coin_id",
+                "symbol",
+                "currency",
+                "timestamp",
+                "price",
+                "market_cap",
+                "volume",
+            ]
+        ]
         df = df.sort_values("timestamp").reset_index(drop=True)
         logger.success(f"  → {len(df)} rows fetched for {coin_id}")
         return df
@@ -148,16 +162,20 @@ class CryptoFetcher:
         if not data:
             return pd.DataFrame()
 
-        df = pd.DataFrame(data, columns=["timestamp_ms", "open", "high", "low", "close"])
+        df = pd.DataFrame(
+            data, columns=["timestamp_ms", "open", "high", "low", "close"]
+        )
         df["timestamp"] = df["timestamp_ms"].apply(self._ts_to_dt)
-        df["coin_id"]   = coin_id
-        df["symbol"]    = settings.coin_symbols.get(coin_id, coin_id.upper())
+        df["coin_id"] = coin_id
+        df["symbol"] = settings.coin_symbols.get(coin_id, coin_id.upper())
         df = df[["coin_id", "symbol", "timestamp", "open", "high", "low", "close"]]
         df = df.sort_values("timestamp").reset_index(drop=True)
         logger.success(f"  → {len(df)} OHLCV rows for {coin_id}")
         return df
 
-    def fetch_market_snapshot(self, coin_ids: Optional[List[str]] = None) -> pd.DataFrame:
+    def fetch_market_snapshot(
+        self, coin_ids: Optional[List[str]] = None
+    ) -> pd.DataFrame:
         """
         Fetch current market snapshot for a list of coins.
 
@@ -184,26 +202,36 @@ class CryptoFetcher:
 
         records = []
         for item in data:
-            records.append({
-                "coin_id":              item.get("id"),
-                "symbol":               item.get("symbol", "").upper(),
-                "name":                 item.get("name"),
-                "current_price":        item.get("current_price"),
-                "market_cap":           item.get("market_cap"),
-                "market_cap_rank":      item.get("market_cap_rank"),
-                "total_volume":         item.get("total_volume"),
-                "high_24h":             item.get("high_24h"),
-                "low_24h":              item.get("low_24h"),
-                "price_change_pct_1h":  item.get("price_change_percentage_1h_in_currency"),
-                "price_change_pct_24h": item.get("price_change_percentage_24h_in_currency"),
-                "price_change_pct_7d":  item.get("price_change_percentage_7d_in_currency"),
-                "price_change_pct_30d": item.get("price_change_percentage_30d_in_currency"),
-                "circulating_supply":   item.get("circulating_supply"),
-                "total_supply":         item.get("total_supply"),
-                "ath":                  item.get("ath"),
-                "ath_date":             item.get("ath_date"),
-                "fetched_at":           datetime.now(tz=timezone.utc),
-            })
+            records.append(
+                {
+                    "coin_id": item.get("id"),
+                    "symbol": item.get("symbol", "").upper(),
+                    "name": item.get("name"),
+                    "current_price": item.get("current_price"),
+                    "market_cap": item.get("market_cap"),
+                    "market_cap_rank": item.get("market_cap_rank"),
+                    "total_volume": item.get("total_volume"),
+                    "high_24h": item.get("high_24h"),
+                    "low_24h": item.get("low_24h"),
+                    "price_change_pct_1h": item.get(
+                        "price_change_percentage_1h_in_currency"
+                    ),
+                    "price_change_pct_24h": item.get(
+                        "price_change_percentage_24h_in_currency"
+                    ),
+                    "price_change_pct_7d": item.get(
+                        "price_change_percentage_7d_in_currency"
+                    ),
+                    "price_change_pct_30d": item.get(
+                        "price_change_percentage_30d_in_currency"
+                    ),
+                    "circulating_supply": item.get("circulating_supply"),
+                    "total_supply": item.get("total_supply"),
+                    "ath": item.get("ath"),
+                    "ath_date": item.get("ath_date"),
+                    "fetched_at": datetime.now(tz=timezone.utc),
+                }
+            )
 
         df = pd.DataFrame(records)
         logger.success(f"  → snapshot for {len(df)} coins")
@@ -247,7 +275,11 @@ class CryptoFetcher:
             logger.error(f"Failed snapshot: {exc}")
 
         return {
-            "market_charts": pd.concat(chart_frames, ignore_index=True) if chart_frames else pd.DataFrame(),
-            "ohlcv":         pd.concat(ohlcv_frames, ignore_index=True) if ohlcv_frames else pd.DataFrame(),
-            "snapshot":      snapshot,
+            "market_charts": pd.concat(chart_frames, ignore_index=True)
+            if chart_frames
+            else pd.DataFrame(),
+            "ohlcv": pd.concat(ohlcv_frames, ignore_index=True)
+            if ohlcv_frames
+            else pd.DataFrame(),
+            "snapshot": snapshot,
         }

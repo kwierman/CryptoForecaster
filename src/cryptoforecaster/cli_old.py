@@ -20,8 +20,16 @@ app = typer.Typer(help="🚀 CryptoForecast — CLI for crypto price forecasting
 console = Console()
 
 _COIN_CHOICES = [
-    "bitcoin", "ethereum", "binancecoin", "solana", "ripple",
-    "cardano", "dogecoin", "avalanche-2", "polkadot", "chainlink",
+    "bitcoin",
+    "ethereum",
+    "binancecoin",
+    "solana",
+    "ripple",
+    "cardano",
+    "dogecoin",
+    "avalanche-2",
+    "polkadot",
+    "chainlink",
 ]
 
 
@@ -33,21 +41,26 @@ def _parse_coins(coins_str: Optional[str]) -> Optional[List[str]]:
 
 @app.command()
 def ingest(
-    coins: Optional[str] = typer.Option(None, "--coins", help="Comma-separated coin IDs"),
-    days:  int           = typer.Option(365,   "--days",  help="Historical days to fetch"),
+    coins: Optional[str] = typer.Option(
+        None, "--coins", help="Comma-separated coin IDs"
+    ),
+    days: int = typer.Option(365, "--days", help="Historical days to fetch"),
 ):
     """Pull data from CoinGecko and store in DuckDB."""
     from cryptoforecaster.ingestion.fetcher import CryptoFetcher
-    from cryptoforecaster.storage.database  import CryptoDatabase
-    from cryptoforecaster.utils.logger      import setup_logger
+    from cryptoforecaster.storage.database import CryptoDatabase
+    from cryptoforecaster.utils.logger import setup_logger
+
     setup_logger()
 
     coin_list = _parse_coins(coins)
-    rprint(f"[bold cyan]🌐 Ingesting data for: {coin_list or 'all default coins'}[/bold cyan]")
+    rprint(
+        f"[bold cyan]🌐 Ingesting data for: {coin_list or 'all default coins'}[/bold cyan]"
+    )
 
     fetcher = CryptoFetcher()
-    db      = CryptoDatabase()
-    data    = fetcher.fetch_all(coin_ids=coin_list, days=days)
+    db = CryptoDatabase()
+    data = fetcher.fetch_all(coin_ids=coin_list, days=days)
 
     db.upsert_market_prices(data["market_charts"])
     db.upsert_ohlcv(data["ohlcv"])
@@ -59,30 +72,35 @@ def ingest(
 
 @app.command()
 def train(
-    coins: Optional[str] = typer.Option(None, "--coins", help="Comma-separated coin IDs"),
-    model: str           = typer.Option("prophet", "--model", help="prophet | arima | ensemble"),
+    coins: Optional[str] = typer.Option(
+        None, "--coins", help="Comma-separated coin IDs"
+    ),
+    model: str = typer.Option("prophet", "--model", help="prophet | arima | ensemble"),
 ):
     """Train a forecast model for each coin."""
     from cryptoforecaster.modeling.trainer import ForecastTrainer
     from cryptoforecaster.storage.database import CryptoDatabase
-    from cryptoforecaster.utils.logger     import setup_logger
+    from cryptoforecaster.utils.logger import setup_logger
+
     setup_logger()
 
     coin_list = _parse_coins(coins)
-    rprint(f"[bold cyan]🧠 Training [{model}] for: {coin_list or 'all coins in DB'}[/bold cyan]")
+    rprint(
+        f"[bold cyan]🧠 Training [{model}] for: {coin_list or 'all coins in DB'}[/bold cyan]"
+    )
 
-    db      = CryptoDatabase()
+    db = CryptoDatabase()
     trainer = ForecastTrainer(db=db, model_name=model)
     results = trainer.train_all(coin_ids=coin_list)
 
     table = Table(title="Training Results", style="bold")
-    table.add_column("Coin",       style="cyan")
-    table.add_column("Model",      style="magenta")
-    table.add_column("Test MAE",   style="yellow")
-    table.add_column("Test MAPE",  style="red")
+    table.add_column("Coin", style="cyan")
+    table.add_column("Model", style="magenta")
+    table.add_column("Test MAE", style="yellow")
+    table.add_column("Test MAPE", style="red")
 
     for coin_id, m in results.items():
-        mae  = m.metrics.get("test_mae", float("nan"))
+        mae = m.metrics.get("test_mae", float("nan"))
         mape = m.metrics.get("test_mape", float("nan"))
         table.add_row(coin_id, m.name, f"{mae:.2f}", f"{mape:.2%}")
 
@@ -92,22 +110,27 @@ def train(
 
 @app.command()
 def predict(
-    coins:   Optional[str] = typer.Option(None, "--coins",   help="Comma-separated coin IDs"),
-    model:   str           = typer.Option("prophet", "--model",   help="prophet | arima | ensemble"),
-    horizon: int           = typer.Option(30,        "--horizon", help="Forecast days ahead"),
+    coins: Optional[str] = typer.Option(
+        None, "--coins", help="Comma-separated coin IDs"
+    ),
+    model: str = typer.Option("prophet", "--model", help="prophet | arima | ensemble"),
+    horizon: int = typer.Option(30, "--horizon", help="Forecast days ahead"),
 ):
     """Run inference and store forecasts in DuckDB."""
     from cryptoforecaster.forecasting.predictor import ForecastPredictor
-    from cryptoforecaster.storage.database      import CryptoDatabase
-    from cryptoforecaster.utils.logger          import setup_logger
+    from cryptoforecaster.storage.database import CryptoDatabase
+    from cryptoforecaster.utils.logger import setup_logger
+
     setup_logger()
 
     coin_list = _parse_coins(coins)
-    rprint(f"[bold cyan]🔮 Forecasting [{model}] +{horizon}d for: {coin_list or 'all coins'}[/bold cyan]")
+    rprint(
+        f"[bold cyan]🔮 Forecasting [{model}] +{horizon}d for: {coin_list or 'all coins'}[/bold cyan]"
+    )
 
-    db        = CryptoDatabase()
+    db = CryptoDatabase()
     predictor = ForecastPredictor(db=db, model_name=model, horizon=horizon)
-    results   = predictor.forecast_all(coin_ids=coin_list)
+    results = predictor.forecast_all(coin_ids=coin_list)
 
     for coin_id, df in results.items():
         future_rows = df[df["is_future"]]
@@ -124,17 +147,19 @@ def predict(
 
 @app.command()
 def pipeline(
-    coins:   Optional[str] = typer.Option(None,      "--coins",   help="Comma-separated coin IDs"),
-    days:    int           = typer.Option(365,        "--days",    help="Historical days"),
-    model:   str           = typer.Option("prophet",  "--model",   help="prophet | arima | ensemble"),
-    horizon: int           = typer.Option(30,         "--horizon", help="Forecast days"),
+    coins: Optional[str] = typer.Option(
+        None, "--coins", help="Comma-separated coin IDs"
+    ),
+    days: int = typer.Option(365, "--days", help="Historical days"),
+    model: str = typer.Option("prophet", "--model", help="prophet | arima | ensemble"),
+    horizon: int = typer.Option(30, "--horizon", help="Forecast days"),
 ):
     """Run the full pipeline: ingest → train → predict."""
     from cryptoforecaster.utils.logger import setup_logger
+
     setup_logger()
 
     rprint("[bold magenta]🚀 Running full pipeline…[/bold magenta]")
-    ctx = typer.Context(app)
 
     # Ingest
     typer.echo("\n─── Step 1: Ingestion ───")
@@ -155,6 +180,7 @@ def pipeline(
 def summary():
     """Show a summary of data stored in DuckDB."""
     from cryptoforecaster.storage.database import CryptoDatabase
+
     db = CryptoDatabase()
     _print_summary(db)
 
@@ -169,7 +195,9 @@ def _print_summary(db):
     for col in df.columns:
         table.add_column(col, style="cyan")
     for _, row in df.iterrows():
-        table.add_row(*[str(round(v, 2)) if isinstance(v, float) else str(v) for v in row])
+        table.add_row(
+            *[str(round(v, 2)) if isinstance(v, float) else str(v) for v in row]
+        )
     console.print(table)
 
 

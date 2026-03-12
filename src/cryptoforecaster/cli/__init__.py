@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 from rich.table import Table
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Optional, List
 
 logging.basicConfig(
@@ -88,7 +88,7 @@ def train(
 
     try:
         model = trainer.train(coin)
-        console.print(f"[green]Model trained successfully![/green]")
+        console.print("[green]Model trained successfully![/green]")
         console.print(f"Model saved to: {model.model_path}")
     except Exception as e:
         console.print(f"[red]Error during training: {e}[/red]")
@@ -184,7 +184,6 @@ def backtest(
     """Backtest a trading strategy on historical data."""
     from cryptoforecaster.storage.database import CryptoDatabase
     from cryptoforecaster.backtest import BacktestEngine
-    from cryptoforecaster.schemas import StrategyParams
 
     coin_list = (
         [c.strip() for c in coins[0].split(",")]

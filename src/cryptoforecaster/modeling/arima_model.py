@@ -40,9 +40,9 @@ class ARIMAModel(BaseModel):
         **kwargs,
     ):
         super().__init__(coin_id, order=order, seasonal_order=seasonal_order, **kwargs)
-        self.order         = order
+        self.order = order
         self.seasonal_order = seasonal_order
-        self._model_fit    = None
+        self._model_fit = None
         self._log_prices: Optional[pd.Series] = None
         self._dates: Optional[pd.DatetimeIndex] = None
 
@@ -54,11 +54,9 @@ class ARIMAModel(BaseModel):
 
         df = self.prepare_series(df)
         self.train_start = df["timestamp"].min().to_pydatetime()
-        self.train_end   = df["timestamp"].max().to_pydatetime()
+        self.train_end = df["timestamp"].max().to_pydatetime()
 
-        self._dates = pd.DatetimeIndex(
-            df["timestamp"].dt.tz_localize(None), freq="D"
-        )
+        self._dates = pd.DatetimeIndex(df["timestamp"].dt.tz_localize(None), freq="D")
         log_p = np.log1p(df["price"].values)
         self._log_prices = pd.Series(log_p, index=self._dates)
 
@@ -73,10 +71,10 @@ class ARIMAModel(BaseModel):
             enforce_stationarity=False,
             enforce_invertibility=False,
         )
-        self._model_fit = model.fit(disp=False, maxiter=200)
+        self._model_fit = model.fit(disp=False, maxiter=200)  # type: ignore[assignment]
 
         # In-sample metrics
-        in_sample = self._model_fit.fittedvalues
+        in_sample = self._model_fit.fittedvalues  # type: ignore[attr-defined]
         y_true = np.expm1(self._log_prices.values)
         y_pred = np.expm1(in_sample.values)
         self.metrics = self._calc_metrics(y_true, y_pred)
@@ -95,12 +93,12 @@ class ARIMAModel(BaseModel):
     ) -> pd.DataFrame:
         self.check_fitted()
 
-        forecast_obj = self._model_fit.get_forecast(steps=horizon)
-        fc_mean      = forecast_obj.predicted_mean
-        fc_ci        = forecast_obj.conf_int(alpha=0.05)
+        forecast_obj = self._model_fit.get_forecast(steps=horizon)  # type: ignore[attr-defined]
+        fc_mean = forecast_obj.predicted_mean
+        fc_ci = forecast_obj.conf_int(alpha=0.05)
 
         # Future dates
-        last_date  = self._dates[-1]
+        last_date = self._dates[-1]  # type: ignore[index]
         future_idx = pd.date_range(
             start=last_date + pd.Timedelta(days=1),
             periods=horizon,
@@ -108,33 +106,37 @@ class ARIMAModel(BaseModel):
         )
 
         fc_prices = np.expm1(fc_mean.values)
-        fc_low    = np.expm1(fc_ci.iloc[:, 0].values)
-        fc_high   = np.expm1(fc_ci.iloc[:, 1].values)
+        fc_low = np.expm1(fc_ci.iloc[:, 0].values)
+        fc_high = np.expm1(fc_ci.iloc[:, 1].values)
 
-        future_df = pd.DataFrame({
-            "timestamp":   pd.DatetimeIndex(future_idx).tz_localize("UTC"),
-            "forecast":    fc_prices,
-            "lower_bound": np.clip(fc_low, 0, None),
-            "upper_bound": fc_high,
-            "is_future":   True,
-        })
+        future_df = pd.DataFrame(
+            {
+                "timestamp": pd.DatetimeIndex(future_idx).tz_localize("UTC"),
+                "forecast": fc_prices,
+                "lower_bound": np.clip(fc_low, 0, None),
+                "upper_bound": fc_high,
+                "is_future": True,
+            }
+        )
 
         if include_history:
-            in_sample = self._model_fit.fittedvalues
-            hist_df = pd.DataFrame({
-                "timestamp":   self._dates.tz_localize("UTC"),
-                "forecast":    np.expm1(in_sample.values),
-                "lower_bound": np.nan,
-                "upper_bound": np.nan,
-                "is_future":   False,
-            })
+            in_sample = self._model_fit.fittedvalues  # type: ignore[attr-defined]
+            hist_df = pd.DataFrame(
+                {
+                    "timestamp": self._dates.tz_localize("UTC"),  # type: ignore[union-attr]
+                    "forecast": np.expm1(in_sample.values),
+                    "lower_bound": np.nan,
+                    "upper_bound": np.nan,
+                    "is_future": False,
+                }
+            )
             result = pd.concat([hist_df, future_df], ignore_index=True)
         else:
             result = future_df
 
-        result["coin_id"]       = self.coin_id
-        result["symbol"]        = settings.coin_symbols.get(self.coin_id, self.coin_id.upper())
-        result["model_name"]    = self.name
+        result["coin_id"] = self.coin_id
+        result["symbol"] = settings.coin_symbols.get(self.coin_id, self.coin_id.upper())
+        result["model_name"] = self.name
         result["model_version"] = self.version
         return result
 
@@ -156,7 +158,7 @@ class ARIMAModel(BaseModel):
 
     @staticmethod
     def _calc_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
-        mae  = float(np.mean(np.abs(y_true - y_pred)))
+        mae = float(np.mean(np.abs(y_true - y_pred)))
         rmse = float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
         mask = y_true != 0
         mape = float(np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])))

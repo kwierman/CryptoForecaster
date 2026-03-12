@@ -34,8 +34,11 @@ class TestARIMAModel:
 
     def test_fit_and_predict(self):
         from cryptoforecaster.modeling.arima_model import ARIMAModel
+
         df = make_price_series(120)
-        model = ARIMAModel(coin_id="bitcoin", order=(2, 1, 0), seasonal_order=(0, 0, 0, 0))
+        model = ARIMAModel(
+            coin_id="bitcoin", order=(2, 1, 0), seasonal_order=(0, 0, 0, 0)
+        )
         model.fit(df)
         assert model._is_fitted
         assert "mae" in model.metrics
@@ -48,14 +51,18 @@ class TestARIMAModel:
 
     def test_unfitted_raises(self):
         from cryptoforecaster.modeling.arima_model import ARIMAModel
+
         model = ARIMAModel(coin_id="bitcoin")
         with pytest.raises(RuntimeError):
             model.predict(horizon=5)
 
     def test_save_and_load(self, tmp_path):
         from cryptoforecaster.modeling.arima_model import ARIMAModel
+
         df = make_price_series(120)
-        model = ARIMAModel(coin_id="bitcoin", order=(1, 1, 0), seasonal_order=(0, 0, 0, 0))
+        model = ARIMAModel(
+            coin_id="bitcoin", order=(1, 1, 0), seasonal_order=(0, 0, 0, 0)
+        )
         model.fit(df)
         path = model.save(str(tmp_path / "arima.joblib"))
 
@@ -71,6 +78,7 @@ class TestProphetModel:
     def test_fit_and_predict(self):
         pytest.importorskip("prophet")
         from cryptoforecaster.modeling.prophet_model import ProphetModel
+
         df = make_price_series(200)
         model = ProphetModel(coin_id="bitcoin")
         model.fit(df)
