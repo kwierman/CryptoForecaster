@@ -17,14 +17,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install uv and set Python version
-        uses: astral-sh/setup-uv@v1
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true # Enable caching for speed improvements
 
       - name: Install dependencies
         # 'uv sync' installs dependencies from pyproject.toml and uv.lock
-        run: uv sync && uv sync --group dev
+        run: uv sync
 
       - name: Run tests
         # Use 'uv run' to execute commands within the managed environment
