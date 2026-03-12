@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 from rich.table import Table
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 
 logging.basicConfig(
@@ -82,12 +82,12 @@ def train(
     from cryptoforecaster.storage.database import CryptoDatabase
 
     db = CryptoDatabase(db_path=db_path) if db_path else CryptoDatabase()
-    trainer = ForecastTrainer(db=db)
+    trainer = ForecastTrainer(db=db, model_name=model_type)
 
     console.print(f"[bold]Training {model_type} model for {coin}[/bold]")
 
     try:
-        model = trainer.train(coin, model_type=model_type)
+        model = trainer.train(coin)
         console.print(f"[green]Model trained successfully![/green]")
         console.print(f"Model saved to: {model.model_path}")
     except Exception as e:
@@ -125,14 +125,16 @@ def predict(
         coin_list = settings.default_coins
 
     db = CryptoDatabase(db_path=db_path) if db_path else CryptoDatabase()
-    predictor = ForecastPredictor(db=db)
+    predictor = ForecastPredictor(
+        db=db,
+        model_name=model_name or settings.default_model,
+        horizon=horizon,
+    )
 
     console.print(f"[bold]Generating predictions for: {', '.join(coin_list)}[/bold]")
 
     try:
-        predictions = predictor.predict(
-            coin_list, horizon=horizon, model_name=model_name
-        )
+        predictions = predictor.forecast(coin_list[0])
 
         table = Table(title="Price Predictions")
         table.add_column("Coin")
@@ -190,8 +192,8 @@ def backtest(
         else coins.split(",")
     )
 
-    start = datetime.strptime(start_date, "%Y-%m-%d")
-    end = datetime.strptime(end_date, "%Y-%m-%d")
+    start = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    end = datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
     db = CryptoDatabase(db_path=db_path) if db_path else CryptoDatabase()
 

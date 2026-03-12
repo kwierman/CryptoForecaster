@@ -115,8 +115,8 @@ class ProphetModel(BaseModel):
         raw = self._model.predict(future)
 
         if not include_history:
-            # Only return the future (beyond training end)
-            raw = raw[raw["ds"] > pd.Timestamp(self.train_end)]
+            train_end_ts = pd.Timestamp(self.train_end).tz_localize(None)
+            raw = raw[raw["ds"] > train_end_ts]
 
         y_hat = raw["yhat"].values
         y_low = raw["yhat_lower"].values
