@@ -27,7 +27,7 @@ dependencies = [
     "pyyaml>=6.0.0",
     "httpx>=0.25.0",
     "pytz>=2024.1",
-    "plotly>=6.6.0",
+    "plotly>=6.7.0",
 ]
 
 [project.optional-dependencies]
