@@ -57,7 +57,7 @@ dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.15.5",
-    "types-requests>=2.32.4.20260107",
+    "types-requests>=2.33.0.20260408",
 ]
 
 [tool.mypy]
